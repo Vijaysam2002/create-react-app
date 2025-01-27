@@ -1,56 +1,47 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_IMAGE = 'react-app:latest'  // Use a local name here
+    }
+
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/vijaysam2002/create-react-app.git'
+                git 'https://github.com/vijaysam2002/create-react-app.git'  // Replace with your Git repo URL
             }
         }
-        stage('Install Dependencies') {
-            steps {
-                sh '''
-                npm install
-                '''
-            }
-        }
-        stage('Build React App') {
-            steps {
-                sh '''
-                npm run build
-                '''
-            }
-        }
+
         stage('Build Docker Image') {
             steps {
-                sh '''
-                docker build -t react-app .
-                '''
+                script {
+                    sh 'docker build -t $DOCKER_IMAGE .'
+                }
             }
         }
-        stage('Deploy Docker Container') {
+
+        stage('Deploy to Server') {
             steps {
-                sh '''
-                docker stop react-app || true
-                docker rm react-app || true
-                docker run -d -p 80:80 --name react-app react-app
-                '''
+                script {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no user@your_server_ip '
+                        docker stop react-app-container || true &&
+                        docker rm react-app-container || true &&
+                        docker run -d --name react-app-container -p 4000:4000 $DOCKER_IMAGE
+                    '
+                    """
+                }
             }
         }
     }
+
     post {
-        always {
-            echo 'Pipeline execution completed.'
-        }
         success {
-            echo 'Pipeline executed successfully.'
+            echo 'Deployment successful!'
         }
         failure {
-            echo 'Pipeline failed. Check the logs for more details.'
+            echo 'Deployment failed.'
         }
     }
 }
-
-
-
 
