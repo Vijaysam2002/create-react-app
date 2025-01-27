@@ -9,7 +9,9 @@ pipeline {
         }
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t react-app .'
+                sh '''
+                docker build -t react-app .
+                '''
             }
         }
         stage('Deploy Docker Container') {
@@ -22,5 +24,18 @@ pipeline {
             }
         }
     }
+    post {
+        always {
+            echo 'Pipeline execution completed.'
+        }
+        success {
+            echo 'Pipeline executed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed. Check the logs for more details.'
+        }
+    }
 }
+
+
 
