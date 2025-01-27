@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/facebook/create-react-app.git'
+                git branch: 'main', url: 'https://github.com/vijaysam2002/create-react-app.git'
             }
         }
         stage('Build Docker Image') {
