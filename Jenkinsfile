@@ -2,45 +2,52 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'react-app:latest'  // Use a local name here
+        DOCKER_IMAGE = 'my-react:latest'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git 'https://github.com/vijaysam2002/create-react-app.git'  // Replace with your Git repo URL
+                // Pull the code from your Git repository
+                checkout scm
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t $DOCKER_IMAGE .'
+                    // Build Docker image
+                    sh 'docker build -t ${DOCKER_IMAGE} .'
                 }
             }
         }
 
-        stage('Deploy to Server') {
+        stage('Run Docker Container') {
             steps {
                 script {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no user@your_server_ip '
-                        docker stop react-app-container || true &&
-                        docker rm react-app-container || true &&
-                        docker run -d --name react-app-container -p 4000:4000 $DOCKER_IMAGE
-                    '
-                    """
+                    // Stop any existing container and run the new container
+                    sh 'docker ps -q --filter "name=react-app" | xargs -r docker stop'
+                    sh 'docker ps -q --filter "name=react-app" | xargs -r docker rm'
+                    sh 'docker run -d -p 4000:4000 --name react-app ${DOCKER_IMAGE}'
+                }
+            }
+        }
+
+        stage('Cleanup Docker Images') {
+            steps {
+                script {
+                    // Clean up unused Docker images
+                    sh 'docker image prune -f'
                 }
             }
         }
     }
-
+    
     post {
-        success {
-            echo 'Deployment successful!'
-        }
-        failure {
-            echo 'Deployment failed.'
+        always {
+            // Clean up containers even if the build fails
+            sh 'docker ps -q --filter "name=react-app" | xargs -r docker stop'
+            sh 'docker ps -q --filter "name=react-app" | xargs -r docker rm'
         }
     }
 }
